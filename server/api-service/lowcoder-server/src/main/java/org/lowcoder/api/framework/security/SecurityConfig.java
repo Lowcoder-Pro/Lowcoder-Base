@@ -141,7 +141,9 @@ public class SecurityConfig {
                         ServerWebExchangeMatchers.pathMatchers(HttpMethod.GET, NewUrl.DATASOURCE_URL + "/jsDatasourcePlugins"),
                         ServerWebExchangeMatchers.pathMatchers(HttpMethod.GET, "/api/docs/**")
                 )
-                	.permitAll()
+                .permitAll()
+                .pathMatchers("/plugins/**")
+                .permitAll()
                 .pathMatchers("/api/**")
                 	.authenticated()
                 .pathMatchers("/test/**")
