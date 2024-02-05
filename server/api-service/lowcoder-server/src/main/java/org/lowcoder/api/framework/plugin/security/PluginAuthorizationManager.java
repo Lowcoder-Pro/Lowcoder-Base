@@ -17,8 +17,10 @@ import org.springframework.security.authorization.ReactiveAuthorizationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
 import reactor.core.publisher.Mono;
 
+@Slf4j
 @Component
 public class PluginAuthorizationManager implements ReactiveAuthorizationManager<MethodInvocation>
 {
@@ -32,6 +34,8 @@ public class PluginAuthorizationManager implements ReactiveAuthorizationManager<
 	@Override
 	public Mono<AuthorizationDecision> check(Mono<Authentication> authentication, MethodInvocation invocation) 
 	{
+		log.info("    invocation :: {}", invocation.getMethod());
+		
 		Method method = invocation.getMethod();
 		EndpointExtension endpointExtension = AnnotationUtils.findAnnotation(method, EndpointExtension.class);
 		if (endpointExtension == null || StringUtils.isBlank(endpointExtension.authorize()))

@@ -4,10 +4,7 @@
 FROM maven:3.9-eclipse-temurin-17 AS build-api-service
 
 # Clone and build lowcoder-plugin-api
-RUN mkdir -p /build/plugin-api \
-  && cd /build/plugin-api \
-  && git clone https://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@github.com/Lowcoder-Pro/lowcoder-plugin-api.git .
-
+COPY ./lowcoder-plugin-api /build/plugin-api
 WORKDIR /build/plugin-api
 RUN --mount=type=cache,target=/root/.m2 mvn -f pom.xml clean install -DskipTests
 
@@ -16,15 +13,7 @@ WORKDIR /lowcoder-server
 RUN --mount=type=cache,target=/root/.m2 mvn -f pom.xml clean package -DskipTests
 
 # Create required folder structure
-RUN mkdir -p /lowcoder/api-service/plugins /lowcoder/api-service/config /lowcoder/api-service/logs /lowcoder/plugins
-
-# Define lowcoder main jar and plugin jars
-ARG JAR_FILE=/lowcoder-server/lowcoder-server/target/lowcoder-server-*.jar
-ARG PLUGIN_JARS=/lowcoder-server/lowcoder-plugins/*/target/*.jar
-
-# Copy lowcoder server application and plugins
-RUN cp ${JAR_FILE} /lowcoder/api-service/server.jar \
-  && cp ${PLUGIN_JARS} /lowcoder/api-service/plugins/
+RUN mkdir -p /lowcoder/api-service/config /lowcoder/api-service/logs /lowcoder/plugins
 
 # Copy lowcoder server configuration
 COPY server/api-service/lowcoder-server/src/main/resources/selfhost/ce/application.yml /lowcoder/api-service/config/
@@ -51,6 +40,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends gosu \
 
 # Copy lowcoder server configuration
 COPY --chown=lowcoder:lowcoder --from=build-api-service /lowcoder/api-service /lowcoder/api-service
+
+# Copy lowcoder api service app, dependencies and libs
+COPY --chown=lowcoder:lowcoder --from=build-api-service /lowcoder-server/distribution/target/lowcoder-api-service-bin/app /lowcoder/api-service/app
+COPY --chown=lowcoder:lowcoder --from=build-api-service /lowcoder-server/distribution/target/lowcoder-api-service-bin/dependencies /lowcoder/api-service/dependencies
+COPY --chown=lowcoder:lowcoder --from=build-api-service /lowcoder-server/distribution/target/lowcoder-api-service-bin/libs /lowcoder/api-service/libs
+COPY --chown=lowcoder:lowcoder --from=build-api-service /lowcoder-server/distribution/target/lowcoder-api-service-bin/plugins /lowcoder/api-service/plugins
+COPY --chown=lowcoder:lowcoder --from=build-api-service /lowcoder-server/distribution/target/lowcoder-api-service-bin/set-classpath.sh /lowcoder/api-service/set-classpath.sh
 
 EXPOSE 8080
 CMD [ "sh" , "/lowcoder/api-service/entrypoint.sh" ]
@@ -212,7 +208,6 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install --no-instal
 # Add lowcoder api-service
 COPY --chown=lowcoder:lowcoder --from=lowcoder-ce-api-service /lowcoder/api-service /lowcoder/api-service
 RUN mkdir -p /lowcoder/plugins/ && chown lowcoder:lowcoder /lowcoder/plugins/
-COPY --chown=lowcoder:lowcoder enterprise-plugin-0.0.1.jar /lowcoder/plugins/enterprise-plugin-0.0.1.jar
 
 # Add lowcoder node-service
 COPY --chown=lowcoder:lowcoder --from=lowcoder-ce-node-service /lowcoder/node-service /lowcoder/node-service

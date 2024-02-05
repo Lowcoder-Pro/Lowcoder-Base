@@ -1,5 +1,6 @@
 package org.lowcoder.runner.migrations.job;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.lowcoder.api.authentication.service.AuthenticationApiServiceImpl;
 import org.lowcoder.api.util.RandomPasswordGeneratorConfig;
@@ -13,20 +14,20 @@ import reactor.core.publisher.Mono;
 
 import static org.lowcoder.domain.authentication.AuthenticationService.DEFAULT_AUTH_CONFIG;
 
+@RequiredArgsConstructor
 @Component
 @Slf4j(topic = "AddSuperAdminUserImpl")
 public class AddSuperAdminUserImpl implements AddSuperAdminUser {
 
-    @Autowired
-    private AuthenticationApiServiceImpl authenticationApiService;
-    @Autowired
-    private CommonConfig commonConfig;
+    private final AuthenticationApiServiceImpl authenticationApiService;
+    private final CommonConfig commonConfig;
+    
     @Override
     public void addSuperAdmin() {
 
         AuthUser authUser = formulateAuthUser();
 
-        authenticationApiService.updateOrCreateUser(authUser)
+        authenticationApiService.updateOrCreateUser(authUser, false)
                 .delayUntil(user -> {
                     if (user.getIsNewUser()) {
                         return authenticationApiService.onUserRegister(user, true);
@@ -39,7 +40,7 @@ public class AddSuperAdminUserImpl implements AddSuperAdminUser {
     private AuthUser formulateAuthUser() {
         String username = formulateUserName();
         String password = formulatePassword();
-        AuthRequestContext authRequestContext = new FormAuthRequestContext(username, password, true);
+        AuthRequestContext authRequestContext = new FormAuthRequestContext(username, password, true, null);
         authRequestContext.setAuthConfig(DEFAULT_AUTH_CONFIG);
         return AuthUser.builder()
                 .uid(username)

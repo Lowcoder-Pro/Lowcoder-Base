@@ -26,9 +26,12 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.ResolvableType;
 import org.springframework.http.ResponseCookie;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Component;
+import org.springframework.web.reactive.function.server.HandlerFunction;
 import org.springframework.web.reactive.function.server.RequestPredicate;
 import org.springframework.web.reactive.function.server.RouterFunction;
+import org.springframework.web.reactive.function.server.ServerRequest;
 import org.springframework.web.reactive.function.server.ServerResponse;
 import org.springframework.web.reactive.function.server.ServerResponse.BodyBuilder;
 
@@ -40,7 +43,7 @@ import reactor.core.publisher.Mono;
 @RequiredArgsConstructor
 @Component
 public class PluginEndpointHandlerImpl implements PluginEndpointHandler
-{	
+{
 	private List<RouterFunction<ServerResponse>> routes = new ArrayList<>();
 	
 	private final ApplicationContext applicationContext;
@@ -85,18 +88,19 @@ public class PluginEndpointHandlerImpl implements PluginEndpointHandler
 				EndpointExtension endpointMeta = handler.getAnnotation(EndpointExtension.class);			
 				String endpointName = endpoint.getClass().getSimpleName() + "_" + handler.getName();
 				
-				RouterFunction<ServerResponse> routerFunction = route(createRequestPredicate(urlPrefix, endpointMeta), req -> {
-						Mono<ServerResponse> result = null;
-						try
-						{
-							EndpointResponse response = (EndpointResponse)handler.invoke(endpoint, PluginServerRequest.fromServerRequest(req));
-							result = createServerResponse(response);
-						}
-						catch (IllegalAccessException | InvocationTargetException cause) 
-						{
-							throw new BaseException("Error running handler for [ " + endpointMeta.method() + ": " + endpointMeta.uri() + "] !");
-						}
-						return result; 
+				RouterFunction<ServerResponse> routerFunction = route(createRequestPredicate(urlPrefix, endpointMeta), req -> 
+				{
+					Mono<ServerResponse> result = null;
+					try
+					{
+						EndpointResponse response = (EndpointResponse)handler.invoke(endpoint, PluginServerRequest.fromServerRequest(req));
+						result = createServerResponse(response);
+					}
+					catch (IllegalAccessException | InvocationTargetException cause) 
+					{
+						throw new BaseException("Error running handler for [ " + endpointMeta.method() + ": " + endpointMeta.uri() + "] !");
+					}
+					return result; 
 				});				
 				routes.add(routerFunction);				
 				registerRouterFunctionMapping(endpointName, routerFunction);
@@ -131,22 +135,16 @@ public class PluginEndpointHandlerImpl implements PluginEndpointHandler
 		if (pluginResponse.headers() != null && !pluginResponse.headers().isEmpty())
 		{
 			pluginResponse.headers().entrySet()
-				.forEach(entry -> {
-					builder.header(entry.getKey(), entry.getValue().toArray(new String[] {}));
-				});
-			
+				.forEach(entry ->  builder.header(entry.getKey(), entry.getValue().toArray(new String[] {})));
 		}
 		
 		/** Set cookies if available **/
 		if (pluginResponse.cookies() != null && !pluginResponse.cookies().isEmpty())
 		{
 			pluginResponse.cookies().values()
-				.forEach(cookies -> {
-					cookies.forEach(cookie -> {
-						builder.cookie(ResponseCookie.from(cookie.getKey(), cookie.getValue()).build());
-					});
-					
-				});
+				.forEach(cookies -> cookies
+						.forEach(cookie -> builder
+								.cookie(ResponseCookie.from(cookie.getKey(), cookie.getValue()).build())));
 		}
 		
 		/** Set response body if available **/

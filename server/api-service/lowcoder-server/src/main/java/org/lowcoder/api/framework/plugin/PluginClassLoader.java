@@ -1,6 +1,7 @@
 package org.lowcoder.api.framework.plugin;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -84,7 +85,6 @@ public class PluginClassLoader extends URLClassLoader
 		}
 		return super.getResources(name);
 	}
-
 
 	private static URL[] pathToURLs(Path path)
 	{

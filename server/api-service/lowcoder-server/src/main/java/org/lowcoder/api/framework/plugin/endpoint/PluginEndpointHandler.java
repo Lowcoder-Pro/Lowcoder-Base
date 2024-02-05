@@ -8,7 +8,7 @@ import org.springframework.web.reactive.function.server.ServerResponse;
 
 public interface PluginEndpointHandler 
 {
-	public static final String PLUGINS_BASE_URL = "/plugins/";
+	public static final String PLUGINS_BASE_URL = "/api/plugins/";
 	
 	void registerEndpoints(String urlPrefix, List<PluginEndpoint> endpoints);
 	List<RouterFunction<ServerResponse>> registeredEndpoints();
