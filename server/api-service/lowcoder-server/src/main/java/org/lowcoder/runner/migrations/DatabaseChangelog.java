@@ -18,6 +18,7 @@ import org.lowcoder.infra.birelation.BiRelation;
 import org.lowcoder.infra.config.model.ServerConfig;
 import org.lowcoder.infra.eventlog.EventLog;
 import org.lowcoder.infra.serverlog.ServerLog;
+import org.lowcoder.runner.migrations.job.AddSuperAdminUser;
 import org.lowcoder.runner.migrations.job.CompleteAuthType;
 import org.lowcoder.runner.migrations.job.MigrateAuthConfigJob;
 import org.springframework.data.domain.Sort;
@@ -180,6 +181,11 @@ public class DatabaseChangelog {
         ensureIndexes(mongoTemplate, ServerLog.class,
                 makeIndex("orgId")
         );
+    }
+
+    @ChangeSet(order = "020", id = "add-super-admin-user", author = "")
+    public void addSuperAdminUser(AddSuperAdminUser addSuperAdminUser) {
+        addSuperAdminUser.addSuperAdmin();
     }
 
     public static Index makeIndex(String... fields) {

@@ -3,14 +3,21 @@ spring:
     mongodb:
       authentication-database: admin
       auto-index-creation: false
-      uri: mongodb://localhost:27017/lowcoder?authSource=admin
+      uri: mongodb://lowcoder:secret123@localhost:27017/lowcoder?authSource=admin
     redis:
       url: redis://localhost:6379
   main:
     allow-bean-definition-overriding: true
     allow-circular-references: true
 
+logging:
+  level:
+    root: info
+    web: debug
+
 server:
+  error:
+    includeStacktrace: ALWAYS
   compression:
     enabled: true
   forward-headers-strategy: NATIVE
@@ -44,6 +51,11 @@ common:
   block-hound-enable: false
   js-executor:
     host: http://127.0.0.1:6060
+  plugin-dirs:
+    - /tmp/plugins
+  super-admin:
+    username: test@lowcoder.pro
+    password: Password@123
 
 material:
   mongodb-grid-fs:
